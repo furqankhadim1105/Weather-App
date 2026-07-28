@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App - Google Style Pro</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <link rel="manifest" href="manifest.json">
+    <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('Service Worker registered!', reg))
+          .catch((err) => console.log('Service Worker registration failed', err));
+      });
+    }
+  </script>
+</head>
+<body id="bodyBg" class="bg-gradient-to-br from-blue-400 to-sky-600 flex items-center justify-center min-h-screen transition-all duration-700 ease-in-out p-4">
+    
+    <div id="mainCard" class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md text-gray-800 dark:text-gray-100 p-6 rounded-3xl shadow-2xl w-full max-w-md transition-all duration-500 relative border border-white/40 dark:border-gray-700">
+        
+        <!-- Top Controls: Unit Switcher & Dark Mode -->
+        <div class="flex justify-between items-center mb-4">
+            <button id="unitToggleBtn" class="bg-blue-100 dark:bg-gray-700 text-blue-800 dark:text-blue-300 text-xs px-3 py-1.5 rounded-full font-bold transition hover:scale-105">
+                °C / °F
+            </button>
+            <button id="themeToggleBtn" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs px-3 py-1.5 rounded-full font-semibold transition hover:scale-105">
+                🌙 Dark
+            </button>
+        </div>
+
+        <h1 class="text-2xl font-black text-blue-900 dark:text-blue-400 mb-4 text-center tracking-wide">Weather App</h1>
+        
+        <!-- Search Section -->
+        <div class="flex gap-2 mb-2">
+            <input type="text" id="cityInput" placeholder="Enter city (e.g. London)" class="border dark:border-gray-600 bg-white/70 dark:bg-gray-900/60 dark:text-white p-2.5 rounded-xl w-full outline-none focus:ring-2 focus:ring-blue-500 text-sm shadow-inner">
+            <button id="searchBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition shadow-md hover:opacity-90">Search</button>
+        </div>
+
+        <!-- Recent Searches Chips Container -->
+        <div id="recentContainer" class="flex flex-wrap gap-1 mb-3 text-xs"></div>
+
+        <!-- Get Current Location Button -->
+        <button id="locBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl mb-4 text-sm font-semibold transition shadow-md flex items-center justify-center gap-2 hover:opacity-90">
+            <span>Use My Current Location</span> 📍
+        </button>
+
+        <div id="loading" class="hidden my-4 text-center text-gray-600 dark:text-gray-300 text-sm animate-pulse">
+            Detecting location & fetching weather...
+        </div>
+
+        <!-- Current Weather Display Box -->
+        <div id="weatherResult" class="hidden mt-2 text-center bg-gradient-to-b from-blue-50 to-white dark:from-gray-700 dark:to-gray-900 p-5 rounded-2xl border dark:border-gray-700 shadow-sm transition-all duration-500 animate-[fadeIn_0.5s_ease-in-out]">
+            <div id="weatherIconContainer" class="flex justify-center mb-1 drop-shadow-md animate-bounce"></div>
+            <h2 id="cityName" class="text-xl font-extrabold text-gray-900 dark:text-white"></h2>
+            <p id="temp" class="text-4xl font-black text-blue-600 dark:text-blue-400 my-1"></p>
+            <p id="description" class="text-gray-600 dark:text-gray-300 capitalize font-medium mb-3 text-sm"></p>
+
+            <!-- Extra Weather Details Grid (Feels Like, Humidity, Wind, Pressure) -->
+            <div class="grid grid-cols-2 gap-2 my-3 text-xs">
+                <div class="bg-white/60 dark:bg-gray-800/60 p-2 rounded-xl border dark:border-gray-700 text-center">
+                    <p class="text-gray-500 dark:text-gray-400 font-semibold">Feels Like</p>
+                    <p id="feelsLike" class="font-bold text-gray-800 dark:text-gray-200 mt-0.5 text-sm"></p>
+                </div>
+                <div class="bg-white/60 dark:bg-gray-800/60 p-2 rounded-xl border dark:border-gray-700 text-center">
+                    <p class="text-gray-500 dark:text-gray-400 font-semibold">Humidity</p>
+                    <p id="humidity" class="font-bold text-gray-800 dark:text-gray-200 mt-0.5 text-sm"></p>
+                </div>
+                <div class="bg-white/60 dark:bg-gray-800/60 p-2 rounded-xl border dark:border-gray-700 text-center">
+                    <p class="text-gray-500 dark:text-gray-400 font-semibold">Wind Speed</p>
+                    <p id="windSpeed" class="font-bold text-gray-800 dark:text-gray-200 mt-0.5 text-sm"></p>
+                </div>
+                <div class="bg-white/60 dark:bg-gray-800/60 p-2 rounded-xl border dark:border-gray-700 text-center">
+                    <p class="text-gray-500 dark:text-gray-400 font-semibold">Pressure</p>
+                    <p id="pressure" class="font-bold text-gray-800 dark:text-gray-200 mt-0.5 text-sm"></p>
+                </div>
+            </div>
+
+            <!-- Sunrise & Sunset Box -->
+            <div class="flex justify-between items-center bg-amber-50 dark:bg-gray-800/80 p-2.5 rounded-xl border border-amber-200 dark:border-gray-700 text-xs mb-3">
+                <div class="flex items-center gap-1">
+                    <span>🌅</span>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400">Sunrise</p>
+                        <p id="sunriseTime" class="font-bold text-gray-800 dark:text-gray-200"></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span>🌇</span>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400">Sunset</p>
+                        <p id="sunsetTime" class="font-bold text-gray-800 dark:text-gray-200"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Advice / Tip Banner (English) -->
+            <div id="weatherTip" class="bg-blue-100/70 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 text-xs p-2 rounded-lg mb-3 font-medium text-center"></div>
+
+            <!-- Hourly Forecast Section -->
+            <div class="mt-3 border-t dark:border-gray-700 pt-3 text-left">
+                <h3 class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Hourly Forecast</h3>
+                <div id="hourlyContainer" class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                    <!-- Hourly items loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- 5-Day Forecast Section -->
+            <div class="mt-3 border-t dark:border-gray-700 pt-3 text-left">
+                <h3 class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">5-Day Forecast</h3>
+                <div id="forecastContainer" class="space-y-2 max-h-36 overflow-y-auto pr-1">
+                    <!-- Forecast items will load here dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script File -->
+    <script src="script.js"></script>
+</body>
+</html>
