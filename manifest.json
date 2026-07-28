@@ -1,0 +1,27 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Weather App",
+  "orientation": "any",
+  "scope": "/Weather-App/",
+  "short_name": "Weather App",
+  "start_url": "/Weather-App/",
+  "theme_color": "#ffffff",
+  "id": "weather-app",
+  "description": "A real-time weather checking web application that provides live city data and atmospheric details.",
+  "icons": [
+    {
+      "src": "android/launchericon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "android/launchericon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
