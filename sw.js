@@ -1,6 +1,6 @@
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open('weather-app-v2').then((cache) => {  // <-- yahan version change kiya
+    caches.open('weather-app-v2').then((cache) => {
       return cache.addAll([
         './',
         './index.html',
@@ -11,7 +11,7 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// Purana cache delete karne ke liye yeh extra event add kar dein taaki naya version foran load ho:
+// Purana cache delete karne ke liye taaki naya version foran load ho
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keyList) => {
