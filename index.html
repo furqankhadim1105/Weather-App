@@ -12,6 +12,7 @@
         }
     </script>
     <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
     <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -22,9 +23,24 @@
     }
   </script>
 </head>
-<body id="bodyBg" class="bg-gradient-to-br from-blue-400 to-sky-600 flex items-center justify-center min-h-screen transition-all duration-700 ease-in-out p-4">
+<body id="bodyBg" class="flex items-center justify-center min-h-screen p-4 transition-all duration-700 ease-in-out">
     
-    <div id="mainCard" class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md text-gray-800 dark:text-gray-100 p-6 rounded-3xl shadow-2xl w-full max-w-md transition-all duration-500 relative border border-white/40 dark:border-gray-700">
+    <!-- Background Animation Container -->
+    <div class="bg-animation-wrap" id="bgAnimationWrap">
+        <!-- Clouds (Day time) -->
+        <div class="cloud x1"></div>
+        <div class="cloud x2"></div>
+        <div class="cloud x3"></div>
+        <!-- Stars (Night time) -->
+        <div class="stars" id="starsContainer"></div>
+    </div>
+
+    <!-- Offline Alert Banner -->
+    <div id="offlineBanner" class="hidden fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white text-xs px-4 py-2 rounded-full shadow-lg z-50 font-bold flex items-center gap-2 animate-bounce">
+        <span>⚠️ You are currently offline. Showing cached status or limited features.</span>
+    </div>
+
+    <div id="mainCard" class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md text-gray-800 dark:text-gray-100 p-6 rounded-3xl shadow-2xl w-full max-w-md transition-all duration-500 relative border border-white/40 dark:border-gray-700 z-10">
         
         <!-- Top Controls: Unit Switcher & Dark Mode -->
         <div class="flex justify-between items-center mb-4">
@@ -57,13 +73,13 @@
         </div>
 
         <!-- Current Weather Display Box -->
-        <div id="weatherResult" class="hidden mt-2 text-center bg-gradient-to-b from-blue-50 to-white dark:from-gray-700 dark:to-gray-900 p-5 rounded-2xl border dark:border-gray-700 shadow-sm transition-all duration-500 animate-[fadeIn_0.5s_ease-in-out]">
+        <div id="weatherResult" class="hidden mt-2 text-center bg-gradient-to-b from-blue-50 to-white dark:from-gray-700 dark:to-gray-900 p-5 rounded-2xl border dark:border-gray-700 shadow-sm transition-all duration-500">
             <div id="weatherIconContainer" class="flex justify-center mb-1 drop-shadow-md animate-bounce"></div>
             <h2 id="cityName" class="text-xl font-extrabold text-gray-900 dark:text-white"></h2>
             <p id="temp" class="text-4xl font-black text-blue-600 dark:text-blue-400 my-1"></p>
             <p id="description" class="text-gray-600 dark:text-gray-300 capitalize font-medium mb-3 text-sm"></p>
 
-            <!-- Extra Weather Details Grid (Feels Like, Humidity, Wind, Pressure) -->
+            <!-- Extra Weather Details Grid -->
             <div class="grid grid-cols-2 gap-2 my-3 text-xs">
                 <div class="bg-white/60 dark:bg-gray-800/60 p-2 rounded-xl border dark:border-gray-700 text-center">
                     <p class="text-gray-500 dark:text-gray-400 font-semibold">Feels Like</p>
@@ -101,23 +117,19 @@
                 </div>
             </div>
 
-            <!-- Weather Advice / Tip Banner (English) -->
+            <!-- Weather Advice / Tip Banner -->
             <div id="weatherTip" class="bg-blue-100/70 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 text-xs p-2 rounded-lg mb-3 font-medium text-center"></div>
 
             <!-- Hourly Forecast Section -->
             <div class="mt-3 border-t dark:border-gray-700 pt-3 text-left">
                 <h3 class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Hourly Forecast</h3>
-                <div id="hourlyContainer" class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                    <!-- Hourly items loaded dynamically -->
-                </div>
+                <div id="hourlyContainer" class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin"></div>
             </div>
 
             <!-- 5-Day Forecast Section -->
             <div class="mt-3 border-t dark:border-gray-700 pt-3 text-left">
                 <h3 class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">5-Day Forecast</h3>
-                <div id="forecastContainer" class="space-y-2 max-h-36 overflow-y-auto pr-1">
-                    <!-- Forecast items will load here dynamically -->
-                </div>
+                <div id="forecastContainer" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div>
             </div>
         </div>
     </div>

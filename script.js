@@ -4,27 +4,16 @@ let currentWeatherData = null;
 let currentForecastData = null; 
 let isCelsius = true;  
 
-// Country Codes to Full Names Mapping
 const countryNames = {
-    "PK": "Pakistan",
-    "IR": "Iran",
-    "GB": "United Kingdom",
-    "US": "United States",
-    "IN": "India",
-    "CA": "Canada",
-    "AU": "Australia",
-    "AE": "United Arab Emirates",
-    "SA": "Saudi Arabia",
-    "DE": "Germany",
-    "FR": "France",
-    "CN": "China",
-    "JP": "Japan"
+    "PK": "Pakistan", "IR": "Iran", "GB": "United Kingdom", "US": "United States",
+    "IN": "India", "CA": "Canada", "AU": "Australia", "AE": "United Arab Emirates",
+    "SA": "Saudi Arabia", "DE": "Germany", "FR": "France", "CN": "China", "JP": "Japan"
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    if (!navigator.onLine) {
-        alert("No internet connection! Please check your network connection.");
-    }
+    checkNetworkStatus();
+    window.addEventListener('online', checkNetworkStatus);
+    window.addEventListener('offline', checkNetworkStatus);
 
     const searchBtn = document.getElementById("searchBtn");
     const searchInput = document.getElementById("cityInput");
@@ -34,20 +23,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadRecentSearches();
 
-    // AUTO-DETECT LOCATION ON APP LOAD
-    if (navigator.geolocation) {
+    if (navigator.onLine && navigator.geolocation) {
         showLoading(true);
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                fetchWeatherByCoords(lat, lon);
+                fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
             },
             (error) => {
                 showLoading(false);
                 console.log("Location permission denied or unavailable.");
             }
         );
+    } else if (!navigator.onLine) {
+        showOfflineAlert(true);
     }
 
     if (searchBtn && searchInput) {
@@ -97,7 +85,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Recent Searches Management (LocalStorage)
+// Network Connection Checker & Alert Handler
+function checkNetworkStatus() {
+    const banner = document.getElementById("offlineBanner");
+    if (!navigator.onLine) {
+        if (banner) banner.classList.remove("hidden");
+    } else {
+        if (banner) banner.classList.add("hidden");
+    }
+}
+
+function showOfflineAlert(show) {
+    const banner = document.getElementById("offlineBanner");
+    if (banner) {
+        if (show) banner.classList.remove("hidden");
+        else banner.classList.add("hidden");
+    }
+}
+
+// Recent Searches Management
 function saveRecentSearch(city) {
     let searches = JSON.parse(localStorage.getItem('recentWeatherCities')) || [];
     let formattedCity = city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
@@ -135,8 +141,11 @@ function loadRecentSearches() {
     }
 }
 
-// Search by City Name with validation
 function fetchWeatherByCityName(city) {
+    if (!navigator.onLine) {
+        alert("You are offline! Cannot fetch new weather data.");
+        return;
+    }
     showLoading(true);
     let originalInput = city.trim();
     let queryParam = originalInput;
@@ -176,8 +185,11 @@ function fetchWeatherByCityName(city) {
         });
 }
 
-// Current Location GPS Button
 function getWeatherByCurrentLocation() {
+    if (!navigator.onLine) {
+        alert("You are offline! Cannot fetch location weather.");
+        return;
+    }
     if (navigator.geolocation) {
         showLoading(true);
         navigator.geolocation.getCurrentPosition(
@@ -195,6 +207,7 @@ function getWeatherByCurrentLocation() {
 }
 
 function fetchWeatherByCoords(lat, lon) {
+    if (!navigator.onLine) return;
     showLoading(true);
     const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
 
@@ -216,6 +229,7 @@ function fetchWeatherByCoords(lat, lon) {
 }
 
 function fetchForecastByCoords(lat, lon) {
+    if (!navigator.onLine) return;
     const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
 
     fetch(forecastUrl)
@@ -236,14 +250,16 @@ function showLoading(show) {
     }
 }
 
-// Display Current Weather & Stats
+// Display Weather & Dynamic Background Animations
 function displayCurrentWeather(data, customDateText = null, isForecastDay = false) {
     const weatherResult = document.getElementById("weatherResult");
     const cityNameEl = document.getElementById("cityName");
     const tempEl = document.getElementById("temp");
     const descriptionEl = document.getElementById("description");
     const iconContainer = document.getElementById("weatherIconContainer");
-    const bodyBg = document.getElementById("bodyBg");
+    const bgWrap = document.getElementById("bgAnimationWrap");
+    const clouds = document.querySelectorAll(".cloud");
+    const stars = document.getElementById("starsContainer");
     
     const feelsLikeEl = document.getElementById("feelsLike");
     const humidityEl = document.getElementById("humidity");
@@ -281,20 +297,16 @@ function displayCurrentWeather(data, customDateText = null, isForecastDay = fals
     if (weatherMainCheck.includes("rain")) {
         adviceText = "🌧️ Don't forget to carry an umbrella!";
     } else if (weatherMainCheck.includes("clear")) {
-        adviceText = "☀️ The weather is clear, wear a cap or sunglasses to protect from the sun.";
+        adviceText = "☀️ The weather is clear, wear a cap or sunglasses.";
     } else if (weatherMainCheck.includes("snow")) {
         adviceText = "❄️ It's quite cold outside, wear warm clothes!";
     }
 
     if (isForecastDay) {
         weatherTipEl.innerText = `📅 ${customDateText} Advice: ${adviceText}`;
-        
-        // Custom message for sunrise and sunset on future days
         sunriseTimeEl.innerText = "Only for Today";
         sunsetTimeEl.innerText = "Only for Today";
-
-        // Message for hourly forecast
-        hourlyContainer.innerHTML = `<p class="text-xs text-gray-500 dark:text-gray-400 py-2 w-full text-center col-span-full">Hourly forecast is only available for Today.</p>`;
+        hourlyContainer.innerHTML = `<p class="text-xs text-gray-500 dark:text-gray-400 py-2 w-full text-center">Hourly forecast is only available for Today.</p>`;
     } else {
         weatherTipEl.innerText = adviceText;
 
@@ -303,6 +315,7 @@ function displayCurrentWeather(data, customDateText = null, isForecastDay = fals
                 const date = new Date(timestamp * 1000);
                 return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             };
+grs = formatTime(currentWeatherData.sys.sunrise);
             sunriseTimeEl.innerText = formatTime(currentWeatherData.sys.sunrise);
             sunsetTimeEl.innerText = formatTime(currentWeatherData.sys.sunset);
         } else {
@@ -325,26 +338,39 @@ function displayCurrentWeather(data, customDateText = null, isForecastDay = fals
     const iconCode = data.weather[0].icon;
     iconContainer.innerHTML = `<img src="https://openweathermap.org/img/wn/${iconCode}@4x.png" alt="Icon" class="w-20 h-20">`;
 
-    if (weatherMainCheck.includes("rain") || weatherMainCheck.includes("drizzle")) {
-        bodyBg.className = "bg-gradient-to-br from-slate-700 via-gray-800 to-zinc-900 flex items-center justify-center min-h-screen transition-all duration-700 ease-in-out p-4";
-    } else if (weatherMainCheck.includes("cloud") || weatherMainCheck.includes("overcast")) {
-        bodyBg.className = "bg-gradient-to-br from-slate-500 via-sky-600 to-blue-700 flex items-center justify-center min-h-screen transition-all duration-700 ease-in-out p-4";
-    } else if (weatherMainCheck.includes("clear")) {
-        bodyBg.className = "bg-gradient-to-br from-amber-400 via-orange-500 to-blue-600 flex items-center justify-center min-h-screen transition-all duration-700 ease-in-out p-4";
-    } else if (weatherMainCheck.includes("snow")) {
-        bodyBg.className = "bg-gradient-to-br from-slate-200 via-blue-200 to-sky-400 flex items-center justify-center min-h-screen transition-all duration-700 ease-in-out p-4";
+    // Dynamic Background & Animations (Day/Night & Weather Conditions)
+    const iconLetter = iconCode.slice(-1); // 'n' for night, 'd' for day
+    if (iconLetter === 'n') {
+        // Night Theme with Stars Animation
+        bgWrap.style.background = 'linear-gradient(to bottom, #0f0c29, #302b63, #24243e)';
+        clouds.forEach(c => c.style.opacity = '0');
+        stars.style.display = 'block';
+        setTimeout(() => stars.style.opacity = '0.8', 50);
     } else {
-        bodyBg.className = "bg-gradient-to-br from-blue-400 to-sky-600 flex items-center justify-center min-h-screen transition-all duration-700 ease-in-out p-4";
+        // Day Theme with Clouds Animation
+        stars.style.opacity = '0';
+        setTimeout(() => stars.style.display = 'none', 500);
+        clouds.forEach(c => c.style.opacity = '0.7');
+
+        if (weatherMainCheck.includes("rain") || weatherMainCheck.includes("drizzle")) {
+            bgWrap.style.background = 'linear-gradient(to bottom, #374151, #1f2937, #111827)';
+        } else if (weatherMainCheck.includes("cloud") || weatherMainCheck.includes("overcast")) {
+            bgWrap.style.background = 'linear-gradient(to bottom, #64748b, #0284c7, #0369a1)';
+        } else if (weatherMainCheck.includes("clear")) {
+            bgWrap.style.background = 'linear-gradient(to bottom, #f59e0b, #ea580c, #2563eb)';
+        } else if (weatherMainCheck.includes("snow")) {
+            bgWrap.style.background = 'linear-gradient(to bottom, #cbd5e1, #93c5fd, #38bdf8)';
+        } else {
+            bgWrap.style.background = 'linear-gradient(to bottom, #38bdf8, #0284c7)';
+        }
     }
 
     weatherResult.classList.remove("hidden");
 }
 
-// Hourly Forecast Display
 function displayHourlyForecast(data) {
     const hourlyContainer = document.getElementById("hourlyContainer");
     hourlyContainer.innerHTML = "";
-
     const hourlyList = data.list.slice(0, 6);
 
     hourlyList.forEach(item => {
@@ -366,21 +392,14 @@ function displayHourlyForecast(data) {
     });
 }
 
-// 5-Day Forecast
 function displayForecast(data) {
     const forecastContainer = document.getElementById("forecastContainer");
     forecastContainer.innerHTML = "";
-
     const dailyForecasts = data.list.filter(item => item.dt_txt.includes("12:00:00")).slice(0, 5);
 
     dailyForecasts.forEach((day, index) => {
         const date = new Date(day.dt * 1000);
-        let dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-        
-        if (index === 0) {
-            dayName = "Today";
-        }
-
+        let dayName = index === 0 ? "Today" : date.toLocaleDateString('en-US', { weekday: 'short' });
         const fullDateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
         
         const tempC = Math.round(day.main.temp);
